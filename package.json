@@ -1,0 +1,71 @@
+{
+  "name": "moment-cldr",
+  "version": "0.0.1",
+  "description": "moment.js plugin that uses cldr data for localization",
+  "dependencies": {
+    "moment": "2.5.1",
+    "cldr.js": "0.3.0",
+    "globalize": "git+http://github.com/jquery/globalize.git#a18e17e95cd98501f448963bbae7f91824556452"
+  },
+  "keywords": [
+    "moment",
+    "dates",
+    "globalization",
+    "internationalization",
+    "multilingualization",
+    "localization",
+    "g11n",
+    "i18n",
+    "m17n",
+    "L10n",
+    "localize",
+    "format",
+    "parse",
+    "calendars",
+    "languages",
+    "locales"
+  ],
+  "homepage": "https://github.com/moment/moment-cldr",
+  "author": "Iskren Chernev",
+  "maintainers": [
+    {
+      "name": "Iskren Chernev",
+      "email": "iskren.chernev@gmail.com"
+    },
+    {
+      "name": "Rafael Xavier de Souza",
+      "email": "rxaviers@gmail.com",
+      "url": "http://rafael.xavier.blog.br"
+    }
+  ],
+  "contributors": [
+    "Rafael Xavier de Souza <rxaviers@gmail.com> (http://rafael.xavier.blog.br)"
+  ],
+  "main": "./moment-cldr.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/moment/moment-cldr.git"
+  },
+  "bugs": {
+    "url": "http://github.com/moment/moment-cldr/issues"
+  },
+  "devDependencies": {
+    "grunt": "0.4.x",
+    "mocha": "1.17.1",
+    "chai": "1.9.0",
+    "grunt-contrib-clean": "0.5.0",
+    "grunt-contrib-jshint": "0.7.2",
+    "grunt-contrib-uglify": "0.2.7",
+    "grunt-contrib-watch": "0.5.3",
+    "grunt-mocha-test": "0.10.0"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://jquery.org/license"
+    }
+  ],
+  "scripts": {
+    "test": "grunt"
+  }
+}

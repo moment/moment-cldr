@@ -1,0 +1,11 @@
+{
+  "name": "moment-cldr",
+  "version": "0.0.1",
+  "ignore": [
+    "test"
+  ],
+  "dependencies": {
+    "cldr.js": "0.3.0",
+    "globalize": "1.0.0-pre"
+  }
+}
