@@ -74,7 +74,7 @@
                 l: 'long',
                 m: 'medium',
                 s: 'short',
-                n: 'narrow',
+                n: 'narrow'
             };
 
             return function (length) {
@@ -89,9 +89,20 @@
         }());
 
         normalizeUnits = (function() {
+            var shortToLong = {
+                ms: 'millisecond',
+                s: 'second',
+                m: 'minute',
+                h: 'hour',
+                d: 'day',
+                w: 'week',
+                M: 'month',
+                y: 'year'
+            };
+
             return function (unit) {
-                // TODO: Implement proper normalization
-                return unit;
+                unit = unit in shortToLong ? shortToLong[unit] : unit;
+                return unit.replace(/s$/, '');
             };
         }());
 
@@ -197,11 +208,15 @@
         durationFormat = (function () {
             var default_options = {
                 // with: '<unit>'
+                // TODO: imply smallFloat with min
                 min: 'second',
                 max: 'year',
+                // TODO: float -> 2 digits only if necessary
                 'float': false,
+                // TODO: implement smallFloat -> float only if abs < 1
                 length: 'long',
                 abs: false,
+                // TODO: Test cutoffs
                 cutoff: {
                     second: 45,
                     minute: 45,
@@ -217,7 +232,7 @@
             function getAmountCategory(amount, lang) {
                 // TODO: unimplemented globalize.plural
                 // http://www.unicode.org/reports/tr35/tr35-numbers.html#Language_Plural_Rules
-                return 'other';
+                return amount === 1 ? 'one' : 'other';
             }
 
             function processOptions(duration, options) {
@@ -274,6 +289,8 @@
                     unit = duration_units[i];
                     amount = Math.abs(duration.as(unit));
                     if (i === end_i || amount < options.cutoff[unit]) {
+                        amount = options['float'] ?
+                            amount : Math.round(amount);
                         return [unit, amount];
                     }
                 }
@@ -285,9 +302,12 @@
                             options.lang),
                     cldr_path = 'cldr/main/{languageId}/units/' + options.length +
                             '/duration-' + unitAmount[0] + '/unitPattern-count-' + amount_category,
-                    fmt = cldrGet(options.lang, cldr_path);
+                    fmt = cldrGet(options.lang, cldr_path),
+                    // TODO: Use globalize to format this
+                    amount_str = options['float'] ?
+                        unitAmount[1].toFixed(2) : unitAmount[1].toString();
 
-                return fillIn(fmt, unitAmount[1]);
+                return fillIn(fmt, amount_str);
             }
 
             function formatRelativeDuration(duration, options) {
@@ -302,8 +322,11 @@
                             'relativeTime-type-' + future_past + '/' +
                             'relativeTimePattern-count-' + amount_category;
                     fmt = cldrGet(options.lang, cldr_path);
+                    // TODO: Use globalize to format this
+                    amount_str = options['float'] ?
+                        unitAmount[1].toFixed(2) : unitAmount[1].toString();
 
-                return fillIn(fmt, unitAmount[1]);
+                return fillIn(fmt, amount_str);
             }
 
             return function (duration, options) {
