@@ -7,6 +7,29 @@
 /*jshint -W015 */
 ;(function (undefined) {
 /*jshint +W015 */
+    // TODO(discuss): pass Zone to globalizeDate.format
+    // TODO: fillIn in globalize
+    // TODO: Does our lang abbreviation play well with cldr's?
+    // TODO: Check date/tokenizer.js or implement our own tokenizer
+    // TODO: Implement format building by algo
+    // * Split into date tokens, time tokens and additional ones (check
+    //   java implementation from email discussion).
+    // * Find date and time formats, that have the given (possibly
+    //   more) tokens. Maybe expand some tokens (YY to YYYY).
+    // * Use appendItem for the additional items
+    // TODO: Implement
+    // http://www.unicode.org/reports/tr35/tr35-dates.html#Parsing_Dates_Times.
+    // * Extract tokens from format
+    // * Use predefined
+    // * Try to parse
+    // TODO: float -> 2 digits only if necessary
+    // TODO: implement smallFloat -> float only if abs < 1
+    // TODO: imply smallFloat with min
+    // TODO: unimplemented globalize.plural
+    // http://www.unicode.org/reports/tr35/tr35-numbers.html#Language_Plural_Rules
+    // TODO: moment vs cldr languages
+    // TODO: Use globalize to format floats
+    // TODO: Put makeAs in moment (export it)
     function factory(moment, Cldr, globalizeDate) {
         // console.log("got moment", moment);
         // console.log("got cldr", cldr);
@@ -114,12 +137,9 @@
         }());
 
         function cldrFormat(fmt, date, locale) {
-            // TODO(discuss): pass Zone?
             return globalizeDate.format(date, {pattern: fmt}, locale);
         }
 
-        // TODO: This should be somewhere in globalize.
-        // Replace {0}, {1} ... with the following arguments.
         function fillIn(fmt) {
             var args = [].slice.call(arguments, 1), i;
 
@@ -155,17 +175,10 @@
 
         tokenFormat = (function () {
             function extractTokens(fmt) {
-                // TODO: Check date/tokenizer.js or implement
                 return ['MM', 'D'];
             }
 
             function buildFormat(tokens, lang) {
-                // TODO: Implement
-                // * Split into date tokens, time tokens and additional ones (check
-                //   java implementation from email discussion).
-                // * Find date and time formats, that have the given (possibly
-                //   more) tokens. Maybe expand some tokens (YY to YYYY).
-                // * Use appendItem for the additional items
                 return 'MM-D';
             }
 
@@ -179,12 +192,9 @@
         }());
 
         function dateTimeFormat(a_moment, options) {
-            // TODO: By default print date and time.
-
             var date, time, junction,
                 date_variant, time_variant, junction_variant,
                 fmt,
-                // TODO: Does our lang abbreviation play well with cldr's?
                 lang = options.lang ? options.lang : moment.lang(),
                 cldrPath = 'cldr/main/{languageId}/dates/calendars/gregorian/';
 
@@ -220,40 +230,28 @@
         moment.fn.human_parse = parseFormat;
 
         function parseFormat(string, format) {
-            // TODO: Implement
-            // http://www.unicode.org/reports/tr35/tr35-dates.html#Parsing_Dates_Times.
-            // * Extract tokens from format
-            // * Use predefined
-            // * Try to parse
         }
 
         durationFormat = (function () {
             var default_options = {
                 // with: '<unit>'
-                // TODO: imply smallFloat with min
                 min: 'second',
                 max: 'year',
-                // TODO: float -> 2 digits only if necessary
                 'float': false,
-                // TODO: implement smallFloat -> float only if abs < 1
                 length: 'long',
                 abs: false,
-                // TODO: Test cutoffs
                 cutoff: {
                     second: 45,
                     minute: 45,
                     hour: 22,
                     day: 25,
                     month: 10,
-                    // TODO (later): more complicated day -> month rounding?
                 }
             },
             duration_units = 'second|minute|hour|day|month|year'.split('|');
 
             // Given amount and language return 'one', 'two', 'few', 'other'
             function getAmountCategory(amount, lang) {
-                // TODO: unimplemented globalize.plural
-                // http://www.unicode.org/reports/tr35/tr35-numbers.html#Language_Plural_Rules
                 return amount === 1 ? 'one' : 'other';
             }
 
@@ -283,7 +281,6 @@
 
 
                 if (options.lang == null) {
-                    // TODO: moment vs cldr languages
                     options.lang = moment.lang();
                 }
 
@@ -325,7 +322,6 @@
                     cldr_path = 'cldr/main/{languageId}/units/' + options.length +
                             '/duration-' + unitAmount[0] + '/unitPattern-count-' + amount_category,
                     fmt = cldrGet(options.lang, cldr_path),
-                    // TODO: Use globalize to format this
                     amount_str = options['float'] ?
                         unitAmount[1].toFixed(2) : unitAmount[1].toString();
 
@@ -344,7 +340,6 @@
                             'relativeTime-type-' + future_past + '/' +
                             'relativeTimePattern-count-' + amount_category;
                     fmt = cldrGet(options.lang, cldr_path);
-                    // TODO: Use globalize to format this
                     amount_str = options['float'] ?
                         unitAmount[1].toFixed(2) : unitAmount[1].toString();
 
@@ -387,7 +382,6 @@
                 return options;
             }
 
-            // TODO: Put this in moment
             function makeAs(input, model) {
                 return model._isUTC ? moment(input).zone(model._offset || 0) :
                     moment(input).local();
@@ -395,7 +389,7 @@
 
             function detectDayDifference(anchor, aMoment, options) {
                 var sod = makeAs(anchor, aMoment).startOf('day'),
-                    diff = aMoment.diff(sod, 'days', true),
+                    diff = Math.floor(aMoment.diff(sod, 'days', true)),
                     cldr_path = 'main/{languageId}/dates/fields/' +
                         'day/relative-type-' + diff;
 
