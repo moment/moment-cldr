@@ -18,6 +18,10 @@
             calendar,  /* defined later */
             cldr_cache = {};
 
+        function isArray(obj) {
+            return Object.prototype.toString.call(obj) === '[object Array]';
+        }
+
         function extend(a, b) {
             for (var i in b) {
                 if (b.hasOwnProperty(i)) {
@@ -55,6 +59,9 @@
         }
 
         function cldrGet(lang, path) {
+            if (isArray(path)) {
+                path = path.join('/');
+            }
             return cldrInstance(lang).get(path);
         }
 
@@ -81,7 +88,7 @@
                 if (length in shortToLong) {
                     length = shortToLong[length];
                 }
-                if (length === true) {
+                if (length === true || length == null) {
                     length = 'full';
                 }
                 return length;
@@ -123,6 +130,20 @@
             return fmt;
         }
 
+        function combineDateTime(date, time, lang, junction_variant) {
+            var cldrPath = 'cldr/main/{languageId}/dates/calendars/gregorian/',
+                junction;
+
+            if (junction_variant == null) {
+                junction_variant = 'medium';
+            }
+
+            junction = cldrGet(lang, cldrPath + 'dateTimeFormats/' +
+                    junction_variant);
+
+            return fillIn(junction, time, date);
+        }
+
         moment.fn.cldr_human = function () {
             var args = [].slice.call(arguments, 0);
             if (typeof args[0] === 'string') {
@@ -150,20 +171,21 @@
 
             return function (moment, args) {
                 var tokens = extractTokens(args[0]),
-                    lang = args[1] ? args[1] : moment.lang()._abbr,
+                    lang = args[1] ? args[1] : moment.lang(),
                     fmt = buildFormat(tokens, lang);
 
                 return cldrFormat(fmt, moment.toDate(), lang);
             };
         }());
 
-        function dateTimeFormat(moment, options) {
+        function dateTimeFormat(a_moment, options) {
+            // TODO: By default print date and time.
 
             var date, time, junction,
                 date_variant, time_variant, junction_variant,
                 fmt,
                 // TODO: Does our lang abbreviation play well with cldr's?
-                lang = options.lang ? options.lang : moment.lang()._abbr,
+                lang = options.lang ? options.lang : moment.lang(),
                 cldrPath = 'cldr/main/{languageId}/dates/calendars/gregorian/';
 
             if (options.datetime) {
@@ -183,15 +205,15 @@
             if (date && time) {
                 junction_variant = (date_variant === time_variant ?
                         date_variant : 'medium');
-                junction = cldrGet(lang, cldrPath + 'dateTimeFormats/' +
-                        junction_variant);
+                // junction = cldrGet(lang, cldrPath + 'dateTimeFormats/' +
+                //         junction_variant);
             }
 
             fmt = (date && time ?
-                    fillIn(junction, time, date) :
+                    combineDateTime(date, time, lang, junction_variant) :
                     date ? date : time);
 
-            var res = cldrFormat(fmt, moment.toDate(), lang);
+            var res = cldrFormat(fmt, a_moment.toDate(), lang);
             return res;
         }
 
@@ -262,7 +284,7 @@
 
                 if (options.lang == null) {
                     // TODO: moment vs cldr languages
-                    options.lang = duration.lang()._abbr;
+                    options.lang = moment.lang();
                 }
 
                 options.min = normalizeUnits(options.min);
@@ -351,15 +373,33 @@
             // TODO: Support finer time on/off support (mimic existing
             // behavior)
             var default_options = {
-                time: true,
+                time: 'short',
             };
+
+            function processOptions(options) {
+                options = extendMany({}, default_options, options);
+
+                if (options.lang == null) {
+                    // TODO: moment vs cldr languages
+                    options.lang = moment.lang();
+                }
+
+                return options;
+            }
+
+            // TODO: Put this in moment
+            function makeAs(input, model) {
+                return model._isUTC ? moment(input).zone(model._offset || 0) :
+                    moment(input).local();
+            }
 
             function detectDayDifference(anchor, aMoment, options) {
                 var sod = makeAs(anchor, aMoment).startOf('day'),
-                    diff = aMoment.diff(sod, 'days', true);
+                    diff = aMoment.diff(sod, 'days', true),
+                    cldr_path = 'main/{languageId}/dates/fields/' +
+                        'day/relative-type-' + diff;
 
-                return cldr.get('main', options.lang, 'dates', 'fields',
-                    'day', 'relative-type-' + diff);
+                return cldrGet(options.lang, cldr_path);
             }
 
             function detectWeekDifference(anchor, aMoment, options) {
@@ -367,6 +407,7 @@
                 var weekdays = 'sun|mon|tue|wed|thu|fri|sat'.split('|'),
                     sow = makeAs(anchor, aMoment).startOf('week'),
                     raw_diff = aMoment.diff(sow, 'weeks', true),
+                    cldr_path,
                     diff;
 
                 // TODO: This logic is wrong. Check java code for proper diff
@@ -377,10 +418,13 @@
                     diff = -1;
                 }
 
-                return diff != null ?
-                    cldr.get('main', options.lang, 'dates', 'fields',
-                            weekdays[aMoment.weekday()],
-                            'relative-type-' + diff) : null;
+                if (diff == null) {
+                    return null;
+                }
+
+                cldr_path = ['main/{languageId}/dates/fields',
+                      weekdays[aMoment.weekday()], 'relative-type-' + diff];
+                return cldrGet(options.lang, cldr_path);
 
                 // format = diff < -6 ? 'sameElse' :
                 //     diff < -1 ? 'lastWeek' :
@@ -390,23 +434,26 @@
                 //     diff < 7 ? 'nextWeek' : 'sameElse';
             }
 
-            return function (aMoment, options) {
-                // FIXME: Handle default options
-                // FIXME: Implement combineDateTime
-                var fmt;
+            return function (m, options) {
+                var date;
 
-                fmt = detectDayDifference(moment(), aMoment, options) ||
-                    detectWeekDifference(moment(), aMoment, options);
+                options = processOptions(options);
 
-                if (fmt) {
-                    return combineDateTime(fmt,
-                        aMoment.human({time: options.time}));
+                date = detectDayDifference(moment(), m, options) ||
+                    detectWeekDifference(moment(), m, options);
+
+                if (date) {
+                    if (options.time === false) {
+                        return date;
+                    }
+
+                    return combineDateTime(date,
+                            m.cldr_human({time: options.time}), options.lang);
                 }
 
-                return this.human({date: 'medium', time: options.time});
+                return m.human({date: 'medium', time: options.time});
             };
         }());
-
 
         moment.fn.cldr_calendar = function (options) {
             return calendar(this, options);
