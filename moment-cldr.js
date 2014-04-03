@@ -7,7 +7,7 @@
 /*jshint -W015 */
 ;(function (undefined) {
 /*jshint +W015 */
-    // TODO(discuss): pass Zone to globalize.format
+    // TODO(discuss): pass Zone to globalize.formatDate
     // TODO: fillIn in globalize
     // TODO: Does our lang abbreviation play well with cldr's?
     // TODO: Check date/tokenizer.js or implement our own tokenizer
@@ -137,7 +137,7 @@
         }());
 
         function cldrFormat(fmt, date, locale) {
-            return globalize.format(date, {pattern: fmt}, locale);
+            return globalize.formatDate(date, {pattern: fmt}, locale);
         }
 
         function fillIn(fmt) {
