@@ -7,7 +7,7 @@
 /*jshint -W015 */
 ;(function (undefined) {
 /*jshint +W015 */
-    // TODO(discuss): pass Zone to globalizeDate.format
+    // TODO(discuss): pass Zone to globalize.format
     // TODO: fillIn in globalize
     // TODO: Does our lang abbreviation play well with cldr's?
     // TODO: Check date/tokenizer.js or implement our own tokenizer
@@ -30,10 +30,10 @@
     // TODO: moment vs cldr languages
     // TODO: Use globalize to format floats
     // TODO: Put makeAs in moment (export it)
-    function factory(moment, Cldr, globalizeDate) {
+    function factory(moment, Cldr, globalize) {
         // console.log("got moment", moment);
         // console.log("got cldr", cldr);
-        // console.log("got globalizeDate", globalizeDate);
+        // console.log("got globalize", globalize);
 
         var normalizeLength,  /* defined later */
             tokenFormat,  /* defined later */
@@ -137,7 +137,7 @@
         }());
 
         function cldrFormat(fmt, date, locale) {
-            return globalizeDate.format(date, {pattern: fmt}, locale);
+            return globalize.format(date, {pattern: fmt}, locale);
         }
 
         function fillIn(fmt) {
@@ -457,7 +457,7 @@
     }
 
     if (typeof define === 'function' && define.amd) {
-        define('moment-cldr', ['moment', 'cldr', 'globalize/date'], factory);
+        define('moment-cldr', ['moment', 'cldr', 'globalize', 'globalize/date'], factory);
     } else if (typeof module !== 'undefined') {
         module.exports = factory(require('moment'), require('cldr.js'), require('globalize'));
     } else if (typeof window !== 'undefined' && window.moment && window.Cldr && window.Globalize) {
