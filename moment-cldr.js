@@ -459,7 +459,7 @@
     if (typeof define === 'function' && define.amd) {
         define('moment-cldr', ['moment', 'cldr', 'globalize/date'], factory);
     } else if (typeof module !== 'undefined') {
-        module.exports = factory(require('moment'), require('cldr.js'), require('globalize/dist/globalize/date'));
+        module.exports = factory(require('moment'), require('cldr.js'), require('globalize'));
     } else if (typeof window !== 'undefined' && window.moment && window.Cldr && window.Globalize) {
         factory(window.moment, window.Cldr, window.Globalize.Date);
     }
